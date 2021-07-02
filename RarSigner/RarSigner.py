@@ -53,9 +53,12 @@ def get_layout():
     verify_winrar_tab = get_verify_winrar_tab()
     tab_group = sg.TabGroup([[generate_keys_tab, sign_winrar_tab, verify_winrar_tab]])
     layout = [[
-                sg.Column([[sg.T("Certificates:")],
-                [sg.Listbox([str(i) for i in range(3)], size=(None, 10), key="-CERTIFICATES-")]]),
-                tab_group
+                    sg.Column(element_justification="center", layout=[
+                                [sg.T("Registered Certificates:")],
+                                [sg.Listbox([str(i) for i in range(3)], size=(None, 10), key="-CERTIFICATES-")],
+                                [sg.Button("Delete Certificate", key="-DELETE-")]
+                              ]),
+                    tab_group
              ]]
     return layout
 

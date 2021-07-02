@@ -17,8 +17,9 @@ class ErrorCodes(enum.IntEnum):
 class MessageType(enum.IntEnum):
     REGISTER_CERTIFICATE = 1    # A request to register a certificate in the server (so that clients can trust it)
     VERIFY_CERTIFICATE = 2      # A request to verify a certificate
-    OK = 3                      # The server reply that indicates success
-    ERROR = 4                   # The server reply that indicates an error
+    DELETE_CERTIFICATE = 3      # A request to delete certificate
+    OK = 4                      # The server reply that indicates success
+    ERROR = 5                   # The server reply that indicates an error
 
 
 ERROR_CODE_TO_MESSAGE = {
@@ -56,6 +57,16 @@ VERIFY_CERTIFICATE_MESSAGE =    construct.FixedSized(MESSAGE_SIZE,
                                         "owner"             / construct.Bytes(lambda ctx: ctx.owner_size),
                                         "public_key_size"   / construct.Int16ub,
                                         "public_key"        / construct.Bytes(lambda ctx: ctx.public_key_size),
+                                    ))
+
+DELETE_CERTIFICATE_MESSAGE =    construct.FixedSized(MESSAGE_SIZE,
+                                    construct.Struct(
+                                        "type"              / construct.Const(MessageType.REGISTER_CERTIFICATE.value, construct.Byte),
+                                        "owner_uuid"        / construct.Bytes(len(uuid.uuid4().hex)),
+                                        "owner_size"        / construct.Int8ub,
+                                        "owner"             / construct.Bytes(lambda ctx: ctx.owner_size),
+                                        "private_key_size"  / construct.Int16ub,
+                                        "private_key"       / construct.Bytes(lambda ctx: ctx.private_key_size),
                                     ))
 
 OK_MESSAGE =                    construct.FixedSized(MESSAGE_SIZE,

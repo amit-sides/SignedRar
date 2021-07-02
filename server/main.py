@@ -75,6 +75,8 @@ def handle_client(client_socket):
                 return_code, owner_uuid = request_handler.verify_certificate(message)
             elif int(generic_message.type) == messages.MessageType.REGISTER_CERTIFICATE:
                 return_code, owner_uuid = request_handler.register_certificate(message)
+            elif int(generic_message.type) == messages.MessageType.DELETE_CERTIFICATE:
+                return_code, owner_uuid = request_handler.delete_certificate(message)
             else:
                 return_code = messages.ErrorCodes.INVALID_MESSAGE
         except construct.ConstructError:

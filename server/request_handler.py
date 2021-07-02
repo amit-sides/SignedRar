@@ -68,6 +68,36 @@ def register_certificate(message):
     # Return OK message to client
     return messages.ErrorCodes.OK, owner_uuid
 
+def delete_certificate(message):
+    global UUID_TO_CERTIFICATE
+
+    # Parse the message
+    try:
+        message = messages.DELETE_CERTIFICATE_MESSAGE.parse(message)
+    except construct.ConstructError:
+        # Should never occur
+        logging.critical(f"Failed to parse delete certificate message: {message.hex()}", exc_info=True)
+        return messages.ErrorCodes.INVALID_MESSAGE, None
+
+    # Check that the certificate exists
+    if message.owner_uuid not in UUID_TO_CERTIFICATE:
+        return messages.ErrorCodes.UNKNOWN_CERTIFICATE, None
+
+    certificate = UUID_TO_CERTIFICATE[message.owner_uuid]
+    if message.owner != certificate[0]:
+        return messages.ErrorCodes.INVALID_CERTIFICATE, None
+
+    if not match(message.private_key, certificate[1]):
+        return messages.ErrorCodes.INVALID_CERTIFICATE, None
+
+    # Remove the certificate from the database
+    del UUID_TO_CERTIFICATE[message.owner_uuid]
+    with open(CA_DATABASE, "w") as db:
+        json.dump(UUID_TO_CERTIFICATE, db)
+
+    # Return OK message to client
+    return messages.ErrorCodes.OK, message.owner_uuid
+
 
 
 
