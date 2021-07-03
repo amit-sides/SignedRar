@@ -1,4 +1,9 @@
 .idea
+**.crt
+**.key
+**.pem
+**.srl
+**.csr
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
