@@ -1,6 +1,8 @@
 import os
 import json
 import zipfile
+import threading
+import time
 
 import PySimpleGUI as sg
 
@@ -12,6 +14,7 @@ import signed_zip
 CERTIFICATES_LIST = os.path.join("ZipSigner", "certificates.json")
 GENERATED_CERTIFICATE = None
 CERTIFICATES = []
+LOADING_THREAD_RUNNING = False
 
 def get_generate_keys_tab():
     certificate_details = sg.Column(element_justification="left", size=(300, 100), layout=[
@@ -102,19 +105,24 @@ def validate_buttons(window, values):
     verify_zip_invalid = not os.path.isfile(values["-VERIFY_ZIP-"]) or not values["-VERIFY_ZIP-"].lower().endswith(".zip")
     window["-VERIFY-"].update(disabled=verify_zip_invalid)
 
+def generate_thread(owner):
+    global GENERATED_CERTIFICATE, LOADING_THREAD_RUNNING
+
+    GENERATED_CERTIFICATE = certificate.Certificate.generate(owner)
+    LOADING_THREAD_RUNNING = False
+
 
 def display_gui():
-    global GENERATED_CERTIFICATE, CERTIFICATES
+    global GENERATED_CERTIFICATE, CERTIFICATES, LOADING_THREAD_RUNNING
 
+    sg.theme('TealMono')
     layout = get_layout()
 
-    window = sg.Window("ZIP Signer", layout, finalize=True)
+    window = sg.Window("ZIP Signer", layout, icon="ZipSigner.ico", finalize=True)
     update_certificates(window)
 
     while True:  # Event Loop
         event, values = window.read()
-        #print(f"event: {event}")
-        #print(f"values: {values}")
         if event == sg.WIN_CLOSED or event == "Exit":
             break
         if event == "-GENERATE_OWNER-":
@@ -124,15 +132,27 @@ def display_gui():
             if len(owner) > 32:
                 sg.popup_error(f"Owner too long! current length: {len(owner)}, needs to be less than 32.", title="Owner too long!")
             else:
-                GENERATED_CERTIFICATE = certificate.Certificate.generate(owner)
+                window["-GENERATE-"].update(disabled=True)
+                LOADING_THREAD_RUNNING = True
+                t = threading.Thread(target=generate_thread, args=(owner,))
+                t.start()
+                current_value = "Generating..."
+                while LOADING_THREAD_RUNNING:
+                    window["-GENERATE-"].update(text=current_value)
+                    window.refresh()
+                    time.sleep(0.3)
+                    current_value += "."
                 window["-REGISTER-"].update(disabled=False)
+                window["-GENERATE-"].update(text="Generate Keys")
+                sg.popup_ok(f"RSA keys have been generated successfully for '{owner}' !", title="Generated :)")
         elif event == "-REGISTER-":
             if GENERATED_CERTIFICATE:
                 result, error = GENERATED_CERTIFICATE.register()
                 if result:
                     add_certificate(window, GENERATED_CERTIFICATE)
-                    GENERATED_CERTIFICATE = None
                     window["-REGISTER-"].update(disabled=True)
+                    sg.popup_ok(f"Certificate has been registered successfully for '{GENERATED_CERTIFICATE.owner}' !", title="Registered :)")
+                    GENERATED_CERTIFICATE = None
                 else:
                     sg.popup_error(error[1] + f"\nerror code: {error[0]}")
         elif event == "-CERTIFICATES-":
