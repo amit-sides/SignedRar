@@ -2,7 +2,7 @@ import construct
 import uuid
 import enum
 
-MESSAGE_SIZE = 256
+MESSAGE_SIZE = 2048
 
 class ErrorCodes(enum.IntEnum):
     OK =                        0
@@ -13,6 +13,7 @@ class ErrorCodes(enum.IntEnum):
     INVALID_CERTIFICATE =       -5
     UNKNOWN_CERTIFICATE =       -6
     PUBLIC_KEY_ALREADY_USED =   -7
+    COMMUNICATION_ERROR =       -8
 
 class MessageType(enum.IntEnum):
     REGISTER_CERTIFICATE = 1    # A request to register a certificate in the server (so that clients can trust it)
@@ -23,14 +24,15 @@ class MessageType(enum.IntEnum):
 
 
 ERROR_CODE_TO_MESSAGE = {
-    ErrorCodes.OK                       : "success",
-    ErrorCodes.UNKNOWN_ERROR            : "Unknown error",
-    ErrorCodes.MESSAGE_INCORRECT_SIZE   : "Incorrect size of message",
-    ErrorCodes.INVALID_MESSAGE          : "Invalid message",
-    ErrorCodes.TIMEOUT                  : "Request timed out",
-    ErrorCodes.INVALID_CERTIFICATE      : "Certificate is invalid",
-    ErrorCodes.UNKNOWN_CERTIFICATE      : "Certificate not found",
-    ErrorCodes.PUBLIC_KEY_ALREADY_USED  : "Public key is already used in another certificate"
+    ErrorCodes.OK                       : b"success",
+    ErrorCodes.UNKNOWN_ERROR            : b"Unknown error",
+    ErrorCodes.MESSAGE_INCORRECT_SIZE   : b"Incorrect size of message",
+    ErrorCodes.INVALID_MESSAGE          : b"Invalid message",
+    ErrorCodes.TIMEOUT                  : b"Request timed out",
+    ErrorCodes.INVALID_CERTIFICATE      : b"Certificate is invalid",
+    ErrorCodes.UNKNOWN_CERTIFICATE      : b"Certificate not found",
+    ErrorCodes.PUBLIC_KEY_ALREADY_USED  : b"Public key is already used in another certificate",
+    ErrorCodes.COMMUNICATION_ERROR      : b"Communication error",
 }
 
 
@@ -51,7 +53,7 @@ REGISTER_CERTIFICATE_MESSAGE =  construct.FixedSized(MESSAGE_SIZE,
 
 VERIFY_CERTIFICATE_MESSAGE =    construct.FixedSized(MESSAGE_SIZE,
                                     construct.Struct(
-                                        "type"              / construct.Const(MessageType.REGISTER_CERTIFICATE.value, construct.Byte),
+                                        "type"              / construct.Const(MessageType.VERIFY_CERTIFICATE.value, construct.Byte),
                                         "owner_uuid"        / construct.Bytes(len(uuid.uuid4().hex)),
                                         "owner_size"        / construct.Int8ub,
                                         "owner"             / construct.Bytes(lambda ctx: ctx.owner_size),
@@ -61,7 +63,7 @@ VERIFY_CERTIFICATE_MESSAGE =    construct.FixedSized(MESSAGE_SIZE,
 
 DELETE_CERTIFICATE_MESSAGE =    construct.FixedSized(MESSAGE_SIZE,
                                     construct.Struct(
-                                        "type"              / construct.Const(MessageType.REGISTER_CERTIFICATE.value, construct.Byte),
+                                        "type"              / construct.Const(MessageType.DELETE_CERTIFICATE.value, construct.Byte),
                                         "owner_uuid"        / construct.Bytes(len(uuid.uuid4().hex)),
                                         "owner_size"        / construct.Int8ub,
                                         "owner"             / construct.Bytes(lambda ctx: ctx.owner_size),

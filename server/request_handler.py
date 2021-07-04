@@ -6,8 +6,9 @@ import uuid
 import construct
 
 from common import messages
+from common import rsa
 
-CA_DATABASE = "certificates.json"
+CA_DATABASE = os.path.join("server", "certificates.json")
 UUID_TO_CERTIFICATE = dict()
 
 def init():
@@ -15,7 +16,7 @@ def init():
 
     if os.path.exists(CA_DATABASE) and os.path.isfile(CA_DATABASE):
         with open(CA_DATABASE, "r") as db:
-            UUID_TO_CERTIFICATE = db.read()
+            UUID_TO_CERTIFICATE = json.loads(db.read())
 
 
 def verify_certificate(message):
@@ -61,7 +62,7 @@ def register_certificate(message):
         owner_uuid = uuid.uuid4().hex
 
     # Add the certificate to the database
-    UUID_TO_CERTIFICATE[owner_uuid] = (message.owner, message.public_key)
+    UUID_TO_CERTIFICATE[owner_uuid] = (message.owner.decode('utf-8'), message.public_key.decode('utf-8'))
     with open(CA_DATABASE, "w") as db:
         json.dump(UUID_TO_CERTIFICATE, db)
 
@@ -80,18 +81,19 @@ def delete_certificate(message):
         return messages.ErrorCodes.INVALID_MESSAGE, None
 
     # Check that the certificate exists
-    if message.owner_uuid not in UUID_TO_CERTIFICATE:
+    owner_uuid = message.owner_uuid.decode("utf-8")
+    if owner_uuid not in UUID_TO_CERTIFICATE:
         return messages.ErrorCodes.UNKNOWN_CERTIFICATE, None
 
-    certificate = UUID_TO_CERTIFICATE[message.owner_uuid]
-    if message.owner != certificate[0]:
+    certificate = UUID_TO_CERTIFICATE[owner_uuid]
+    if message.owner.decode("utf-8") != certificate[0]:
         return messages.ErrorCodes.INVALID_CERTIFICATE, None
 
-    if not match(message.private_key, certificate[1]):
+    if not rsa.keys_match(message.private_key, certificate[1]):
         return messages.ErrorCodes.INVALID_CERTIFICATE, None
 
     # Remove the certificate from the database
-    del UUID_TO_CERTIFICATE[message.owner_uuid]
+    del UUID_TO_CERTIFICATE[owner_uuid]
     with open(CA_DATABASE, "w") as db:
         json.dump(UUID_TO_CERTIFICATE, db)
 

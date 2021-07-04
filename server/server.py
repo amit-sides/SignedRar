@@ -1,10 +1,12 @@
+import os
 import logging
 import socket
-import multiprocessing
+import multiprocessing as mp
+import multiprocessing.dummy as multiprocessing
 import ssl
 
-CERTFILE = "certificates/server.crt"
-KEYFILE = "certificates/server.key"
+CERTFILE = os.path.join("server", "certificates", "server.crt")
+KEYFILE = os.path.join("server", "certificates", "server.key")
 PORT = 12345
 MAX_LISTENERS = 10
 
@@ -32,6 +34,7 @@ class TLSServer(object):
 
         # Wrap the listening TCP socket with the TLS connection
         self.server = self.context.wrap_socket(self.socket, server_side=True)
+        self.server.settimeout(1.0)
 
         # Set server to running
         self.running = True
@@ -41,12 +44,14 @@ class TLSServer(object):
             try:
                 conn, addr = self.server.accept()
             except (OSError, ConnectionError) as e:
-                logging.error("Failed to accept a client: {}".format(e.args))
+                if e.args[0] != "timed out":
+                    logging.error("Failed to accept a client: {}".format(e.args))
             else:
                 try:
                     process = self.pool.Process(target=client_handler, args=(conn, addr) + args, kwargs=kwargs)
                 except TypeError:  # In python 3.8+ The Process function requires additional parameter called `ctx`
-                    ctx = multiprocessing.get_context("fork")
+                    ctx = mp.get_context()
+                    #import ipdb; ipdb.set_trace()
                     process = self.pool.Process(ctx, target=client_handler, args=(conn, addr) + args, kwargs=kwargs)
                 process.start()
 
