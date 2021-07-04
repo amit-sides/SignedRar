@@ -20,6 +20,8 @@ def validate(data, signature, public_key, n):
 def validate_hash(hash, signature, public_key, n):
     if type(hash) is str:
         hash = hash.encode("utf-8")
+    if type(signature) is str:
+        signature = int(signature)
     calculated_hash = int.from_bytes(hash, byteorder='big')
     hash_from_signature = pow(signature, public_key, n)
     return calculated_hash == hash_from_signature

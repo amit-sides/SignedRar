@@ -29,11 +29,12 @@ def verify_certificate(message):
         return messages.ErrorCodes.INVALID_MESSAGE, None
 
     # Validate certificate
-    if message.owner_uuid not in UUID_TO_CERTIFICATE:
+    owner_uuid = message.owner_uuid.decode("utf-8")
+    if owner_uuid not in UUID_TO_CERTIFICATE:
         return messages.ErrorCodes.UNKNOWN_CERTIFICATE, None
 
-    certificate = UUID_TO_CERTIFICATE[message.owner_uuid]
-    if message.owner != certificate[0] or message.public_key != certificate[1]:
+    certificate = UUID_TO_CERTIFICATE[owner_uuid]
+    if message.owner.decode("utf-8") != certificate[0] or message.public_key.decode("utf-8") != certificate[1]:
         return messages.ErrorCodes.INVALID_CERTIFICATE, None
 
     return messages.ErrorCodes.OK, message.owner_uuid

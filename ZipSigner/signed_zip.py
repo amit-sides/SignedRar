@@ -9,6 +9,7 @@ import certificate
 class SignedZip(zipfile.ZipFile):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self._certificate = None
 
     @property
     def _hash(self):
@@ -20,6 +21,12 @@ class SignedZip(zipfile.ZipFile):
                 if "Nothing to hash" in e.args[0]:
                     return hashlib.sha384(b"").hexdigest()
                 raise e
+
+    @property
+    def certificate(self):
+        if self._certificate is None:
+            _, self._certificate = self.parse_signature()
+        return self._certificate
 
     def sign(self, certificate):
         signature = certificate.sign_hash(self._hash)
@@ -44,5 +51,5 @@ class SignedZip(zipfile.ZipFile):
         return signature, certificate.Certificate.from_pem(owner, public_key, uuid)
 
     def verify(self):
-        signature, certificate = self.parse_signature()
-        return certificate.validate_hash(self._hash, signature)
+        signature, self._certificate = self.parse_signature()
+        return self._certificate.validate_hash(self._hash, signature)

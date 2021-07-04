@@ -53,7 +53,7 @@ def get_verify_zip_tab():
     ])
 
     sign_zip_layout = [
-        [sg.Text("ZIP file: "), sg.Input(key="-VERIFY_ZIP-", size=(30, None)),
+        [sg.Text("ZIP file: "), sg.Input(key="-VERIFY_ZIP-", size=(30, None), enable_events=True),
                                 sg.FileBrowse(key="-VERIFY_BROWSE-", file_types=(("Zip Files", "*.zip"),))],
         [sg.Button("Verify ZIP", key="-VERIFY-", disabled=True)],
         [certificate_details],
@@ -96,8 +96,11 @@ def update_certificates(window):
     window["-CERTIFICATES-"].update(values=CERTIFICATES)
 
 def validate_buttons(window, values):
-    zip_invalid = not os.path.isfile(values["-SIGN_ZIP-"]) or not values["-SIGN_ZIP-"].lower().endswith(".zip")
-    window["-SIGN-"].update(disabled=zip_invalid or values["-SIGN_CERTIFICATE-"] is None or values["-SIGN_CERTIFICATE-"] == "")
+    sign_zip_invalid = not os.path.isfile(values["-SIGN_ZIP-"]) or not values["-SIGN_ZIP-"].lower().endswith(".zip")
+    window["-SIGN-"].update(disabled=sign_zip_invalid or values["-SIGN_CERTIFICATE-"] is None or values["-SIGN_CERTIFICATE-"] == "")
+
+    verify_zip_invalid = not os.path.isfile(values["-VERIFY_ZIP-"]) or not values["-VERIFY_ZIP-"].lower().endswith(".zip")
+    window["-VERIFY-"].update(disabled=verify_zip_invalid)
 
 
 def display_gui():
@@ -146,7 +149,7 @@ def display_gui():
                 else:
                     sg.popup_error(error_message.decode("utf-8") + f"\nerror code: {return_code}")
             window["-DELETE-"].update(disabled=True)
-        elif event == "-SIGN_CERTIFICATE-" or event == "-SIGN_ZIP-":
+        elif event == "-SIGN_CERTIFICATE-" or event == "-SIGN_ZIP-" or event == "-VERIFY_ZIP-":
             validate_buttons(window, values)
             if values["-SIGN_CERTIFICATE-"]:
                 window["-SIGN_CERTIFICATE_OWNER-"].update(value=values["-SIGN_CERTIFICATE-"].owner)
@@ -156,11 +159,26 @@ def display_gui():
             try:
                 with signed_zip.SignedZip(values["-SIGN_ZIP-"], "a") as zip:
                     zip.sign(values["-SIGN_CERTIFICATE-"])
+                sg.popup_ok(f"The file {values['-SIGN_ZIP-']} has been signed successfully!", title="Signed :)")
             except (zipfile.BadZipfile, zipfile.LargeZipFile) as e:
-                print(e)
                 sg.popup_error(f"The file {values['-SIGN_ZIP-']} is either not a ZIP or too large.", title="Error")
         elif event == "-VERIFY-":
-            pass
+            try:
+                with signed_zip.SignedZip(values["-VERIFY_ZIP-"], "a") as zip:
+                    signature_valid = zip.verify()
+                if signature_valid:
+                    return_code, response, error_message = communication.verify_certificate(zip.certificate)
+                    if return_code == messages.ErrorCodes.OK:
+                        window["-VERIFY_CERTIFICATE_OWNER-"].update(value=zip.certificate.owner)
+                        window["-VERIFY_CERTIFICATE_UUID-"].update(value=zip.certificate.uuid)
+                        sg.popup_ok(f"The file {values['-VERIFY_ZIP-']} has been verified successfully!", title="Verified :)")
+                    else:
+                        sg.popup_error(error_message.decode("utf-8") + f"\nerror code: {return_code}")
+                else:
+                    sg.popup_error(f"The file {values['-VERIFY_ZIP-']} doesn't have a valid signature.", title="Not Verified!")
+
+            except (zipfile.BadZipfile, zipfile.LargeZipFile) as e:
+                sg.popup_error(f"The file {values['-VERIFY_ZIP-']} is either not a ZIP or too large.", title="Error")
 
     window.close()
 
