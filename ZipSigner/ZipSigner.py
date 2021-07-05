@@ -154,7 +154,7 @@ def display_gui():
                     sg.popup_ok(f"Certificate has been registered successfully for '{GENERATED_CERTIFICATE.owner}' !", title="Registered :)")
                     GENERATED_CERTIFICATE = None
                 else:
-                    sg.popup_error(error[1] + f"\nerror code: {error[0]}")
+                    sg.popup_error(error[1].decode("utf-8") + f"\nerror code: {error[0]}")
         elif event == "-CERTIFICATES-":
             window["-DELETE-"].update(disabled=len(values["-CERTIFICATES-"]) <= 0)
         elif event == "-DELETE-":

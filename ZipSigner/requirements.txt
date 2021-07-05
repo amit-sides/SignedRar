@@ -1,4 +1,6 @@
 construct
-Crypto
+Crypto # For Windows
+pycryptodome # For Linux
 scandir
 dirhash
+pysimplegui

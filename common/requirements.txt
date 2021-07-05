@@ -1,2 +1,3 @@
 construct
-Crypto
+Crypto # For Windows
+pycryptodome # For Linux
