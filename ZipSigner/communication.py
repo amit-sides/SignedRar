@@ -5,7 +5,7 @@ import construct
 
 from common import messages
 
-CA_CERTIFICATE = os.path.join("server", "certificates", "ca.crt")
+CA_CERTIFICATE = os.path.join("ZipSigner", "ca.crt")
 SERVER_IP = "localhost"
 SERVER_PORT = 12345
 CONTEXT = None

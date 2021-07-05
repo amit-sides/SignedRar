@@ -52,4 +52,6 @@ class SignedZip(zipfile.ZipFile):
 
     def verify(self):
         signature, self._certificate = self.parse_signature()
+        if signature is None or self._certificate is None:
+            return False
         return self._certificate.validate_hash(self._hash, signature)

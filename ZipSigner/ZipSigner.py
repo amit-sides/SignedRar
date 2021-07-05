@@ -184,7 +184,7 @@ def display_gui():
                 sg.popup_error(f"The file {values['-SIGN_ZIP-']} is either not a ZIP or too large.", title="Error")
         elif event == "-VERIFY-":
             try:
-                with signed_zip.SignedZip(values["-VERIFY_ZIP-"], "a") as zip:
+                with signed_zip.SignedZip(values["-VERIFY_ZIP-"], "r") as zip:
                     signature_valid = zip.verify()
                 if signature_valid:
                     return_code, response, error_message = communication.verify_certificate(zip.certificate)
