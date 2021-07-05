@@ -144,7 +144,7 @@ def display_gui():
                     current_value += "."
                 window["-REGISTER-"].update(disabled=False)
                 window["-GENERATE-"].update(text="Generate Keys")
-                sg.popup_ok(f"RSA keys have been generated successfully for '{owner}' !", title="Generated :)")
+                sg.popup_ok(f"RSA keys have been generated successfully for '{owner}' !\nYou can now register your certificate with the server.", title="Generated :)")
         elif event == "-REGISTER-":
             if GENERATED_CERTIFICATE:
                 result, error = GENERATED_CERTIFICATE.register()
