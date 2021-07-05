@@ -4,7 +4,7 @@ import hashlib
 
 import dirhash
 
-import certificate
+from ZipSigner import certificate
 
 class SignedZip(zipfile.ZipFile):
     def __init__(self, *args, **kwargs):

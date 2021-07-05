@@ -2,7 +2,7 @@ from Crypto.PublicKey import RSA
 
 from common import messages
 from common import rsa
-import communication
+from ZipSigner import communication
 
 class Certificate(object):
     def __init__(self, owner, key_pair, uuid=None):

@@ -7,9 +7,9 @@ import time
 import PySimpleGUI as sg
 
 from common import messages
-import certificate
-import communication
-import signed_zip
+from ZipSigner import certificate
+from ZipSigner import communication
+from ZipSigner import signed_zip
 
 CERTIFICATES_LIST = os.path.join("ZipSigner", "certificates.json")
 GENERATED_CERTIFICATE = None

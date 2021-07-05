@@ -4,7 +4,7 @@ import logging
 import construct
 
 from common import messages
-import request_handler
+from server import request_handler
 
 CLIENT_TIMEOUT = 60  # Seconds
 

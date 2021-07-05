@@ -2,9 +2,9 @@ import sys
 import logging
 
 
-import server
-import client_handler
-import request_handler
+from server import server
+from server import client_handler
+from server import request_handler
 
 
 
