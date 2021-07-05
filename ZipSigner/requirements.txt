@@ -1,3 +1,4 @@
 construct
 Crypto
+scandir
 dirhash
